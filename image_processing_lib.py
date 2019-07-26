@@ -122,7 +122,7 @@ class image_processing:
         info_dict['postcode'] = '43553'
         if image_url.endswith('/'):
             image_url = image_url[:-1]
-        info_dict['image_name'] = image_url.split('/')[:-1]
+        info_dict['image_name'] = ""
         info_dict['image_url'] = image_url
         products = []
         for _ in range(1, 10):
