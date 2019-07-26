@@ -185,14 +185,14 @@ class image_processing:
                         target = self.convert_to_square(new_img, expect_shape)
                         processed_img_list.append(target)
 
-            for (x, y, w, h) in coord_list:
-                rect = cv.rectangle(img_region, (x, y), (x + w, y + h), color=(255, 0, 255), thickness=1)
+            # for (x, y, w, h) in coord_list:
+            #     rect = cv.rectangle(img_region, (x, y), (x + w, y + h), color=(255, 0, 255), thickness=1)
 
-            predicted_word = self.predict(processed_img_list, expect_shape)
-            total_list += (predicted_word + ' ')
+            # predicted_word = self.predict(processed_img_list, expect_shape)
+            # total_list += (predicted_word + ' ')
 
-            processed_img_list = []
-            coord_list = []
+            # processed_img_list = []
+            # coord_list = []
 
         dict_file = self.get_json(total_list, img_url)
         return dict_file
