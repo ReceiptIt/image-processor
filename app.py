@@ -2,7 +2,7 @@ import json
 import os
 from flask import Flask, jsonify, request
 from flask_cors import CORS
-from image_processing_lib import image_processing
+import image_processing_lib 
 
 PORT = 8080
 
@@ -11,8 +11,8 @@ CORS(app)
 @app.route("/receipt/process/result", methods=['GET'])
 def get_receipt_process_result():
     imageUrl = request.args.get('imageUrl')
-
-    return image_processing().process_img(imageUrl)
+    ocr = image_processing_lib.image_processing()
+    return ocr.process_img(imageUrl)
 
 
 @app.route("/", methods=['GET'])

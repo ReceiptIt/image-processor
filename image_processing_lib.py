@@ -1,11 +1,11 @@
 import cv2 as cv
 import numpy as np
-import urllib
 from matplotlib import pyplot as plt
 import train_ocr_lib_zip
 import re
+import urllib
 
-class image_processing_lib:
+class image_processing:
 
     def convert_to_square(self, new_img, expect_shape):
         BKG = [255, 255, 255]
@@ -21,23 +21,22 @@ class image_processing_lib:
         target = cv.resize(img_padding, expect_shape)
         return target
 
+
     def predict(self, processed_img_list, expect_shape):
         ocr = train_ocr_lib_zip.train_ocr_lib()
 
         result_word = ''
-        for line in processed_img_list:
-            for word in line:
-                if len(word) <= 0:
-                    continue
-                curr_shape = np.shape(word)
-                # print(word)
-                input_list = np.reshape(word, (curr_shape[0], curr_shape[1], curr_shape[2], 1))
-                _, _, processed_list, _, input_shape = ocr.process(input_list, None,
-                                                                   input_list, None, 128,
-                                                                   expect_shape[0], expect_shape[1])
-                result = ocr.test(processed_list, "../model_ascii.h5", input_shape, 128)
-                for c in result:
-                    result_word += chr(c)
+        if len(processed_img_list) <= 0:
+            return ''
+        curr_shape = np.shape(processed_img_list)
+        # print(word)
+        input_list = np.reshape(processed_img_list, (curr_shape[0], curr_shape[1], curr_shape[2], 1))
+        _, _, processed_list, _, input_shape = ocr.process(input_list, None,
+                                                           input_list, None, 128,
+                                                           expect_shape[0], expect_shape[1])
+        result = ocr.test(processed_list, "../model_ascii.h5", input_shape, 128)
+        for c in result:
+            result_word += chr(c)
         print(result_word)
 
         return result_word
@@ -50,16 +49,8 @@ class image_processing_lib:
         dilation = cv.dilate(thresh1, rect_kernel, iterations=1)
         # cv.imshow('dilation', dilation)
         contours, hierarchy = cv.findContours(dilation, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE)
-
-        '''
-        im2 = gray.copy()
-        for cnt in contours:
-            x, y, w, h = cv.boundingRect(cnt)
-            cv.rectangle(im2, (x, y), (x + w, y + h), (0, 255, 0), 2)
-        cv.imshow('final', im2)
-        cv.waitKey(0)
-        '''
         return contours
+
 
     def process_region(self, cnt, bw, img):
         (h, w) = img.shape[:2]
@@ -86,87 +77,76 @@ class image_processing_lib:
         # rects = sorted(rects, key=lambda x: x[1]+x[3])
         return rects, bw_region, img_region, r_h
 
+
     def url_to_image(self, url):
         resp = urllib.request.urlopen(url)
         image = np.asarray(bytearray(resp.read()), dtype="uint8")
         image = cv.imdecode(image, cv.IMREAD_COLOR)
         return image
 
-    def combine_boxes(self, rects):
-        print('-----------------------NEW-----------------------------')
-        print(rects)
-        index_del = []
-        for n, rect in enumerate(rects):
-            x, y, w, h = rect
-            print(type(rect))
-            print('rect:', rect)
-            for j, other in enumerate(rects):
-                if n == j or j in index_del:
-                    continue
-                o_x, o_y, o_w, o_h = other
-                print('other:', other)
-                mid_o_x = int(o_x + o_w/2)
-                if x < mid_o_x < x + w:
-                    print(x)
-                    print(o_x)
-                    print(min(x, o_x))
-                    rects[n] = [min(x, o_x), min(y, o_y), max(w, o_w), max(h, o_h)]
-                    print('new_rect:', rects[n])
-                    if j not in index_del:
-                        index_del.append(j)
-                print('end')
-        index_del.sort(reverse=True)
-        for n in index_del:
-            del rects[n]
-        return rects
 
-    def get_json(self, image_url, predict_list=None):
+    def combine_boxes(self, coords, coord_list):
+        x, y, w, h = coords
+        new_coords = coords
+        index = -1
+        for j, other in enumerate(coord_list):
+            o_x, o_y, o_w, o_h = other
+            mid_o_x = int(o_x + o_w / 2)
+            if x < mid_o_x < x + w:
+                new_w = max(x + w, o_x + o_w) - min(x, o_x)
+                new_h = max(y + h, o_y + o_h) - min(y, o_y)
+                new_coords = [min(x, o_x), min(y, o_y), new_w, new_h]
+                index = j
+                break
+        return new_coords, index
+
+
+    def get_json(self, predict_list):
         # price_pattern = '[0-9oOzl]+.[0-9ozl][0-9oOzl]'
         # price_list = re.
 
         info_dict = {}
+        info_dict['total_amount'] = 7140.49
+        info_dict['merchant'] = 'Royal Bank of Canada'
+        info_dict['postcode'] = 'N2J 1N8'
+        if image_url.endswith('/'):
+            image_url = image_url[:-1]
+        info_dict['image_name'] = image_url.split('/')[-1]
+        info_dict['image_url'] = image_url
+        products = []
+        product_info = {}
+        product_info['name'] = 'Withdrawals'
+        product_info['quantity'] = 1
+        product_info['currency_code'] = 'CAD'
+        product_info['price'] = '80.68'
+        products.append(product_info)
 
-        if predict_list == None:
-            info_dict = {}
-            info_dict['total_amount'] = 7140.49
-            info_dict['merchant'] = 'Royal Bank of Canada'
-            info_dict['postcode'] = 'N2J 1N8'
-            if image_url.endswith('/'):
-                image_url = image_url[:-1]
-            info_dict['image_name'] = image_url.split('/')[-1]
-            info_dict['image_url'] = image_url
-            products = []
-            product_info = {}
-            product_info['name'] = 'Withdrawals'
-            product_info['quantity'] = 1
-            product_info['currency_code'] = 'CAD'
-            product_info['price'] = '80.68'
-            products.append(product_info)
-
-            product_info_b = {}
-            product_info_b['name'] = 'Cash Paid Out'
-            product_info_b['quantity'] = 1
-            product_info_b['currency_code'] = 'CAD'
-            product_info_b['price'] = '80.68'
-            products.append(product_info_b)
-            info_dict['products'] = products
+        product_info_b = {}
+        product_info_b['name'] = 'Cash Paid Out'
+        product_info_b['quantity'] = 1
+        product_info_b['currency_code'] = 'CAD'
+        product_info_b['price'] = '80.68'
+        products.append(product_info_b)
+        info_dict['products'] = products
         return info_dict
+        pass
+
 
     def process_img(self, img_url):
         expect_shape = (28, 28)
-        # img = url_to_image(img_url)
         img = self.url_to_image(img_url)
+        # img = cv.imread(img_url)
         # (h, w) = img.shape[:2]
         # image_size = h*w
 
-        gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY) #Converting to GrayScale
+        gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)  # Converting to GrayScale
         # _, bw = cv.threshold(gray, 160.0, 255.0, cv.THRETH_BINARY | cv.THRESH_OTSU)
         _, bw = cv.threshold(gray, 210, 255, cv.THRESH_BINARY)
 
         contours = self.get_lines(gray)
 
         contours_single, hierarchy_single = cv.findContours(bw, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
-        cv.drawContours(bw, contours_single, -1, (0,255,0), 1)
+        cv.drawContours(bw, contours_single, -1, (0, 255, 0), 1)
 
         # sorted_ctrs = sorted(contours, key=lambda ctr: cv.boundingRect(ctr)[1])
         sorted_ctrs = sorted(contours, key=lambda ctr: cv.boundingRect(ctr)[0] + cv.boundingRect(ctr)[1] * bw.shape[1])
@@ -177,73 +157,46 @@ class image_processing_lib:
             rects, bw_region, img_region, r_h = self.process_region(cnt, bw, img)
             if len(rects) <= 0:
                 continue
-
-            temp_list = []
-            row_rects = []
-            word_list = []
-            row_word = []
-            single_word = []
-            single_word_img_list = []
-            row_img_list = []
             processed_img_list = []
-            previous_height = rects[0][1] + rects[0][3]
-
-            for x, y, w, h in rects:
-                if (y + h) > previous_height + 3 or (y + h) < previous_height - 3:
-                    row_rects.append(temp_list.copy())
-                    temp_list = []
-                temp_list.append([x, y, w, h])
-                previous_height = y + h
-
-            if len(temp_list) != 0:
-                row_rects.append(temp_list)
-
-            for row_list in row_rects:
-                row_list = sorted(row_list, key=lambda x: x[0])
-                previous_width = row_list[0][0]
-                for (x, y, w, h) in row_list:
-                    if x > previous_width + 25:
-                        row_word.append(single_word.copy())
-                        single_word = []
-                    single_word.append([x, y, w, h])
-                    previous_width = x + w
-                row_word.append(single_word.copy())
-                word_list.append(row_word.copy())
-                row_word = []
-                single_word = []
-
             # With the rects you can e.g. crop the letters
-            for row_word in word_list:
-                for single_word in row_word:
-                    for (x, y, w, h) in single_word:
-                        new_img = bw_region[y:y+h+1, x:x+w+1].copy()
-                        check_img = new_img[len(new_img)-1].copy()
-                        # cv.imshow('123', check_img)
-                        # cv.waitKey(0)
-                        # ret, new_img_bw = cv.threshold(new_img,160,255,cv.THRESH_BINARY)
-                        new_img_bw_np = np.array(new_img)
-                        new_img_bw_np = np.ndarray.flatten(new_img_bw_np)
-                        new_img_bw_flt = list(new_img_bw_np)
-                        check_img_in = list(np.ndarray.flatten(np.array(check_img)))
-                        if 0 in new_img_bw_flt:
-                            if not all(i <= 200 for i in check_img_in):
-                                target = self.convert_to_square(new_img, expect_shape)
-                                single_word_img_list.append(target)
-                                rect = cv.rectangle(img_region, (x, y), (x+w, y+h), color=(255, 0, 255), thickness=1)
-                                # print(x, y, w, h)
-                    row_img_list.append(single_word_img_list.copy())
-                    single_word_img_list = []
-                processed_img_list.append(row_img_list.copy())
-                row_img_list = []
+            coord_list = []
+            for (x, y, w, h) in rects:
+                new_img = bw_region[y:y + h + 1, x:x + w + 1].copy()
+                check_img = new_img[len(new_img) - 1].copy()
+                # cv.imshow('123', check_img)
+                # cv.waitKey(0)
+                # ret, new_img_bw = cv.threshold(new_img,160,255,cv.THRESH_BINARY)
+                new_img_bw_np = np.array(new_img)
+                new_img_bw_np = np.ndarray.flatten(new_img_bw_np)
+                new_img_bw_flt = list(new_img_bw_np)
+                check_img_in = list(np.ndarray.flatten(np.array(check_img)))
+                if 0 in new_img_bw_flt:
+                    if not all(i <= 200 for i in check_img_in):
+                        coords = [x, y, w, h]
+                        new_coords, j = self.combine_boxes(coords, coord_list)
+                        n_x, n_y, n_w, n_h = new_coords
+                        if j == -1:
+                            coord_list.append(coords)
+                        else:
+                            del coord_list[j]
+                            del processed_img_list[j]
+                            new_img = bw_region[n_y:n_y + n_h + 1, n_x:n_x + n_w + 1].copy()
+                            coord_list.append(new_coords)
+                        target = self.convert_to_square(new_img, expect_shape)
+                        processed_img_list.append(target)
 
-            # predicted_word = self.predict(processed_img_list, expect_shape)
-            # total_list += (predicted_word + ' ')
+            for (x, y, w, h) in coord_list:
+                rect = cv.rectangle(img_region, (x, y), (x + w, y + h), color=(255, 0, 255), thickness=1)
 
-            # cv.imshow('123', img_region)
-            # cv.waitKey(0)
+            predicted_word = self.predict(processed_img_list, expect_shape)
+            total_list += (predicted_word + ' ')
 
-        dict_file = self.get_json(img_url)
+            processed_img_list = []
+            coord_list = []
+
+        dict_file = self.get_json(total_list)
         return dict_file
 
-lib = image_processing_lib()
-lib.process_img('https://receiptit-image.s3.ca-central-1.amazonaws.com/receipt-1632.png')
+
+# lib = image_processing()
+# lib.process_img('imgs/u.png')
