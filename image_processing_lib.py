@@ -34,7 +34,7 @@ class image_processing:
         _, _, processed_list, _, input_shape = ocr.process(input_list, None,
                                                            input_list, None, 128,
                                                            expect_shape[0], expect_shape[1])
-        result = ocr.test(processed_list, "../model_ascii.h5", input_shape, 128)
+        result = ocr.test(processed_list, "model_ascii.h5", input_shape, 128)
         for c in result:
             result_word += chr(c)
         print(result_word)
@@ -101,7 +101,7 @@ class image_processing:
         return new_coords, index
 
 
-    def get_json(self, predict_list):
+    def get_json(self, predict_list, image_url):
         # price_pattern = '[0-9oOzl]+.[0-9ozl][0-9oOzl]'
         # price_list = re.
 
@@ -194,7 +194,7 @@ class image_processing:
             processed_img_list = []
             coord_list = []
 
-        dict_file = self.get_json(total_list)
+        dict_file = self.get_json(total_list, img_url)
         return dict_file
 
 
