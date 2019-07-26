@@ -153,37 +153,37 @@ class image_processing:
 
         total_list = ''
 
-        for cnt in sorted_ctrs:
-            rects, bw_region, img_region, r_h = self.process_region(cnt, bw, img)
-            if len(rects) <= 0:
-                continue
-            processed_img_list = []
-            # With the rects you can e.g. crop the letters
-            coord_list = []
-            for (x, y, w, h) in rects:
-                new_img = bw_region[y:y + h + 1, x:x + w + 1].copy()
-                check_img = new_img[len(new_img) - 1].copy()
-                # cv.imshow('123', check_img)
-                # cv.waitKey(0)
-                # ret, new_img_bw = cv.threshold(new_img,160,255,cv.THRESH_BINARY)
-                new_img_bw_np = np.array(new_img)
-                new_img_bw_np = np.ndarray.flatten(new_img_bw_np)
-                new_img_bw_flt = list(new_img_bw_np)
-                check_img_in = list(np.ndarray.flatten(np.array(check_img)))
-                if 0 in new_img_bw_flt:
-                    if not all(i <= 200 for i in check_img_in):
-                        coords = [x, y, w, h]
-                        new_coords, j = self.combine_boxes(coords, coord_list)
-                        n_x, n_y, n_w, n_h = new_coords
-                        if j == -1:
-                            coord_list.append(coords)
-                        else:
-                            del coord_list[j]
-                            del processed_img_list[j]
-                            new_img = bw_region[n_y:n_y + n_h + 1, n_x:n_x + n_w + 1].copy()
-                            coord_list.append(new_coords)
-                        target = self.convert_to_square(new_img, expect_shape)
-                        processed_img_list.append(target)
+        # for cnt in sorted_ctrs:
+        #     rects, bw_region, img_region, r_h = self.process_region(cnt, bw, img)
+        #     if len(rects) <= 0:
+        #         continue
+        #     processed_img_list = []
+        #     # With the rects you can e.g. crop the letters
+        #     coord_list = []
+        #     for (x, y, w, h) in rects:
+        #         new_img = bw_region[y:y + h + 1, x:x + w + 1].copy()
+        #         check_img = new_img[len(new_img) - 1].copy()
+        #         # cv.imshow('123', check_img)
+        #         # cv.waitKey(0)
+        #         # ret, new_img_bw = cv.threshold(new_img,160,255,cv.THRESH_BINARY)
+        #         new_img_bw_np = np.array(new_img)
+        #         new_img_bw_np = np.ndarray.flatten(new_img_bw_np)
+        #         new_img_bw_flt = list(new_img_bw_np)
+        #         check_img_in = list(np.ndarray.flatten(np.array(check_img)))
+        #         if 0 in new_img_bw_flt:
+        #             if not all(i <= 200 for i in check_img_in):
+        #                 coords = [x, y, w, h]
+        #                 new_coords, j = self.combine_boxes(coords, coord_list)
+        #                 n_x, n_y, n_w, n_h = new_coords
+        #                 if j == -1:
+        #                     coord_list.append(coords)
+        #                 else:
+        #                     del coord_list[j]
+        #                     del processed_img_list[j]
+        #                     new_img = bw_region[n_y:n_y + n_h + 1, n_x:n_x + n_w + 1].copy()
+        #                     coord_list.append(new_coords)
+        #                 target = self.convert_to_square(new_img, expect_shape)
+        #                 processed_img_list.append(target)
 
             # for (x, y, w, h) in coord_list:
             #     rect = cv.rectangle(img_region, (x, y), (x + w, y + h), color=(255, 0, 255), thickness=1)
