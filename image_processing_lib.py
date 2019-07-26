@@ -245,8 +245,4 @@ class image_processing_lib:
         return dict_file
 
 lib = image_processing_lib()
-<<<<<<< HEAD
-lib.process_img("https://receiptit-image.s3.ca-central-1.amazonaws.com/receipt-1632.png")
-=======
-lib.process_img('imgs/v.png')
->>>>>>> 5ad1f14ce2915c0ee15b51da7d6eb148b3c5c58e
+lib.process_img('https://receiptit-image.s3.ca-central-1.amazonaws.com/receipt-1632.png')
