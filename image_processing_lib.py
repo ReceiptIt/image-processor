@@ -1,5 +1,6 @@
 import cv2 as cv
 import numpy as np
+import urllib
 from matplotlib import pyplot as plt
 import train_ocr_lib_zip
 import re
@@ -154,7 +155,7 @@ class image_processing_lib:
     def process_img(self, img_url):
         expect_shape = (28, 28)
         # img = url_to_image(img_url)
-        img = cv.imread(img_url)
+        img = self.url_to_image(img_url)
         # (h, w) = img.shape[:2]
         # image_size = h*w
 
